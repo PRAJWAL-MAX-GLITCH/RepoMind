@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RepoMind — AI Code Intelligence</title>
+  <meta name="description" content="RepoMind: Local AI-powered code intelligence platform. Index, query, summarize and analyze your repositories." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080c14;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --border-active: rgba(99,179,237,0.5);
+      --accent: #63b3ed;
+      --accent2: #9f7aea;
+      --accent3: #68d391;
+      --accent4: #fc8181;
+      --accent5: #f6ad55;
+      --text: #e2e8f0;
+      --text-muted: #718096;
+      --text-dim: #4a5568;
+      --card-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --glow: 0 0 40px rgba(99,179,237,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99,179,237,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,179,237,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient glow orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px; left: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,179,237,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatOrb 12s ease-in-out infinite;
+    }
+
+    @keyframes floatOrb {
+      0%, 100% { transform: translate(0,0); }
+      50% { transform: translate(80px, 60px); }
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 32px;
+      background: rgba(8,12,20,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 20px rgba(99,179,237,0.3);
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .header-status {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent4);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.online { background: var(--accent3); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+      50% { opacity: 0.7; box-shadow: 0 0 0 4px transparent; }
+    }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 61px);
+      position: relative; z-index: 1;
+    }
+
+    /* ── SIDEBAR ── */
+    aside {
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      background: rgba(8,12,20,0.6);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-section {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 1.5px;
+      color: var(--text-dim); text-transform: uppercase;
+      padding: 16px 12px 8px;
+    }
+
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      border: none; cursor: pointer;
+      background: transparent; color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem; font-weight: 500;
+      text-align: left; width: 100%;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(99,179,237,0.15), rgba(159,122,234,0.1));
+      color: var(--accent);
+      border: 1px solid rgba(99,179,237,0.2);
+    }
+
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 28px; }
+    .page-title {
+      font-size: 1.75rem; font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text), var(--text-muted));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(99,179,237,0.2); }
+
+    .card-title {
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--text-muted); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title-icon { font-size: 14px; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+      margin-bottom: 6px; letter-spacing: 0.3px;
+    }
+
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,179,237,0.1);
+    }
+
+    textarea { min-height: 80px; resize: vertical; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 8px;
+      border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem; font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      box-shadow: 0 4px 16px rgba(99,179,237,0.25);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(99,179,237,0.35);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── RESPONSE AREA ── */
+    .response-box {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 80px;
+      color: var(--text);
+      display: none;
+    }
+    .response-box.visible { display: block; }
+
+    .response-label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* ── LOADING SPINNER ── */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .badge-blue { background: rgba(99,179,237,0.15); color: var(--accent); border: 1px solid rgba(99,179,237,0.3); }
+    .badge-green { background: rgba(104,211,145,0.12); color: var(--accent3); border: 1px solid rgba(104,211,145,0.3); }
+    .badge-red { background: rgba(252,129,129,0.12); color: var(--accent4); border: 1px solid rgba(252,129,129,0.3); }
+    .badge-orange { background: rgba(246,173,85,0.12); color: var(--accent5); border: 1px solid rgba(246,173,85,0.3); }
+    .badge-purple { background: rgba(159,122,234,0.12); color: var(--accent2); border: 1px solid rgba(159,122,234,0.3); }
+
+    /* ── HOTSPOT CARDS ── */
+    .hotspot-list { display: flex; flex-direction: column; gap: 10px; }
+    .hotspot-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .hotspot-card.high { border-left: 3px solid var(--accent4); }
+    .hotspot-card.medium { border-left: 3px solid var(--accent5); }
+    .hotspot-card.low { border-left: 3px solid var(--accent3); }
+
+    .hotspot-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .hotspot-reason { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── SOURCE CHUNKS ── */
+    .chunk-list { display: flex; flex-direction: column; gap: 10px; }
+    .chunk-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .chunk-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .chunk-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; color: var(--accent);
+    }
+    .chunk-lines {
+      font-size: 0.72rem; color: var(--text-muted);
+    }
+    .chunk-content {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px; padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem; color: var(--text);
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 200px; overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    /* ── SUMMARY GRID ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .summary-item {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+    }
+    .summary-item-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;
+    }
+    .summary-item-value {
+      font-size: 0.85rem; color: var(--text); line-height: 1.5;
+    }
+    .summary-item.full { grid-column: 1 / -1; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 0.875rem; font-weight: 500;
+      background: rgba(30,40,60,0.95);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--card-shadow);
+      transform: translateY(20px); opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: rgba(104,211,145,0.4); color: var(--accent3); }
+    #toast.error { border-color: rgba(252,129,129,0.4); color: var(--accent4); }
+
+    /* ── DASHBOARD STATS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .stat-card:hover {
+      border-color: rgba(99,179,237,0.25);
+      transform: translateY(-2px);
+      box-shadow: var(--glow);
+    }
+    .stat-value { font-size: 2rem; font-weight: 800; }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── ANSWER BOX ── */
+    .answer-box {
+      background: rgba(99,179,237,0.05);
+      border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 10px; padding: 20px;
+      font-size: 0.9rem; line-height: 1.7;
+      color: var(--text); margin-bottom: 16px;
+    }
+
+    .answer-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+    }
+
+    /* Section divider */
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    /* ── ARCH SECTION ── */
+    .arch-section { margin-bottom: 16px; }
+    .arch-section-title {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 8px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .arch-content {
+      font-size: 0.85rem; line-height: 1.7; color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* tag list */
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      padding: 3px 10px; border-radius: 99px;
+      font-size: 0.72rem; font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border); color: var(--text-muted);
+    }
+
+    /* ── INDEXING REPORT ── */
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px; margin-top: 12px;
+    }
+    .report-item {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px;
+    }
+    .report-item-key {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 4px;
+    }
+    .report-item-val {
+      font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+    }
+    .file-list {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem; line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .file-list span.file { color: var(--accent3); }
+    .file-list span.skip { color: var(--accent4); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    <div class="logo-text">Repo<span>Mind</span></div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting…</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="nav-section">Navigation</div>
+    <button class="nav-btn active" onclick="switchTab('home')" id="nav-home">
+      <span class="nav-icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-btn" onclick="switchTab('index')" id="nav-index">
+      <span class="nav-icon">📂</span> Index Repo
+    </button>
+    <button class="nav-btn" onclick="switchTab('query')" id="nav-query">
+      <span class="nav-icon">💬</span> Query
+    </button>
+    <button class="nav-btn" onclick="switchTab('summary')" id="nav-summary">
+      <span class="nav-icon">📋</span> Summary
+    </button>
+    <button class="nav-btn" onclick="switchTab('architecture')" id="nav-architecture">
+      <span class="nav-icon">🏗️</span> Architecture
+    </button>
+    <button class="nav-btn" onclick="switchTab('hotspots')" id="nav-hotspots">
+      <span class="nav-icon">🔥</span> Hotspots
+    </button>
+    <div class="nav-section">Info</div>
+    <button class="nav-btn" onclick="checkHealth()" id="nav-health">
+      <span class="nav-icon">💚</span> Check Health
+    </button>
+  </aside>
+
+  <main>
+
+    <!-- ── HOME ── -->
+    <div class="tab-panel active" id="tab-home">
+      <div class="page-header">
+        <div class="page-title">AI Code Intelligence</div>
+        <div class="page-subtitle">Index, query, and analyze your repositories with local AI</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" style="color: var(--accent)">5</div>
+          <div class="stat-label">API Endpoints</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color: var(--accent3)">100%</div>
+          <div class="stat-label">Local &amp; Private</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color: var(--accent2)">RAG</div>
+          <div class="stat-label">Powered By</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🚀</span> Quick Start</div>
+        <p style="font-size:0.875rem; color:var(--text-muted); line-height:1.7; margin-bottom:16px;">
+          1. Go to <strong style="color:var(--text)">Index Repo</strong> → paste your local repository path → click Index.<br>
+          2. Open <strong style="color:var(--text)">Query</strong> → type the repo name and ask a question.<br>
+          3. Use <strong style="color:var(--text)">Summary / Architecture / Hotspots</strong> tabs for deeper analysis.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="switchTab('index')">📂 Index a Repository</button>
+          <button class="btn btn-secondary" onclick="switchTab('query')">💬 Query Code</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">⚡</span> Features</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:rgba(99,179,237,0.05); border:1px solid rgba(99,179,237,0.15); border-radius:8px; padding:14px;">
+            <div style="font-size:1.2rem; margin-bottom:6px;">📂</div>
+            <div style="font-weight:600; font-size:0.875rem; margin-bottom:4px;">Smart Indexing</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Parses and chunks your code with language-aware splitting</div>
+          </div>
+          <div style="background:rgba(159,122,234,0.05); border:1px solid rgba(159,122,234,0.15); border-radius:8px; padding:14px;">
+            <div style="font-size:1.2rem; margin-bottom:6px;">💬</div>
+            <div style="font-weight:600; font-size:0.875rem; margin-bottom:4px;">RAG Queries</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Ask natural language questions; get cited file + line answers</div>
+          </div>
+          <div style="background:rgba(104,211,145,0.05); border:1px solid rgba(104,211,145,0.15); border-radius:8px; padding:14px;">
+            <div style="font-size:1.2rem; margin-bottom:6px;">📋</div>
+            <div style="font-weight:600; font-size:0.875rem; margin-bottom:4px;">Dev Summary</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Auto-generated onboarding summary of any codebase</div>
+          </div>
+          <div style="background:rgba(252,129,129,0.05); border:1px solid rgba(252,129,129,0.15); border-radius:8px; padding:14px;">
+            <div style="font-size:1.2rem; margin-bottom:6px;">🔥</div>
+            <div style="font-weight:600; font-size:0.875rem; margin-bottom:4px;">Hotspot Finder</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Flags risky, complex and security-sensitive files</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INDEX ── -->
+    <div class="tab-panel" id="tab-index">
+      <div class="page-header">
+        <div class="page-title">Index Repository</div>
+        <div class="page-subtitle">Point RepoMind at a local path to scan, chunk and embed your code</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📂</span> Repository Path</div>
+        <div class="form-group">
+          <label for="indexPath">Absolute path to repository</label>
+          <input type="text" id="indexPath" placeholder="e.g. D:\Projects\my-repo" />
+        </div>
+        <button class="btn btn-primary" id="indexBtn" onclick="indexRepo()">
+          <span>📡</span> Start Indexing
+        </button>
+      </div>
+
+      <div id="indexResult"></div>
+    </div>
+
+    <!-- ── QUERY ── -->
+    <div class="tab-panel" id="tab-query">
+      <div class="page-header">
+        <div class="page-title">Query Codebase</div>
+        <div class="page-subtitle">Ask natural language questions — get answers with file path &amp; line citations</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">💬</span> Ask a Question</div>
+        <div class="form-group">
+          <label for="queryRepo">Repository name</label>
+          <input type="text" id="queryRepo" placeholder="e.g. my-repo" />
+        </div>
+        <div class="form-group">
+          <label for="queryText">Question</label>
+          <textarea id="queryText" placeholder="e.g. How does authentication work? Where is the database connection setup?"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="queryTopK">Top-K results (chunks)</label>
+          <input type="number" id="queryTopK" value="5" min="1" max="20" style="width:80px;" />
+        </div>
+        <button class="btn btn-primary" id="queryBtn" onclick="queryRepo()">
+          <span>🔍</span> Search &amp; Answer
+        </button>
+      </div>
+      <div id="queryResult"></div>
+    </div>
+
+    <!-- ── SUMMARY ── -->
+    <div class="tab-panel" id="tab-summary">
+      <div class="page-header">
+        <div class="page-title">Repository Summary</div>
+        <div class="page-subtitle">Auto-generated developer onboarding overview of the codebase</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📋</span> Generate Summary</div>
+        <div class="form-group">
+          <label for="summaryRepo">Repository name</label>
+          <input type="text" id="summaryRepo" placeholder="e.g. my-repo" />
+        </div>
+        <button class="btn btn-primary" id="summaryBtn" onclick="getRepoSummary()">
+          <span>📋</span> Generate Summary
+        </button>
+      </div>
+      <div id="summaryResult"></div>
+    </div>
+
+    <!-- ── ARCHITECTURE ── -->
+    <div class="tab-panel" id="tab-architecture">
+      <div class="page-header">
+        <div class="page-title">Architecture Analysis</div>
+        <div class="page-subtitle">High-level structural view of your repository's tech stack and design</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🏗️</span> Analyze Architecture</div>
+        <div class="form-group">
+          <label for="archRepo">Repository name</label>
+          <input type="text" id="archRepo" placeholder="e.g. my-repo" />
+        </div>
+        <button class="btn btn-primary" id="archBtn" onclick="getArchitecture()">
+          <span>🏗️</span> Analyze
+        </button>
+      </div>
+      <div id="archResult"></div>
+    </div>
+
+    <!-- ── HOTSPOTS ── -->
+    <div class="tab-panel" id="tab-hotspots">
+      <div class="page-header">
+        <div class="page-title">Code Hotspots</div>
+        <div class="page-subtitle">Files flagged as risky, complex, or security-sensitive by heuristic analysis</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🔥</span> Find Hotspots</div>
+        <div class="form-group">
+          <label for="hotspotRepo">Repository name</label>
+          <input type="text" id="hotspotRepo" placeholder="e.g. my-repo" />
+        </div>
+        <button class="btn btn-primary" id="hotspotBtn" onclick="getHotspots()">
+          <span>🔥</span> Find Hotspots
+        </button>
+      </div>
+      <div id="hotspotResult"></div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = 'http://localhost:8080';
+
+// ── TAB SWITCHING ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
+}
+
+// ── TOAST ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.className = '', 3500);
+}
+
+// ── HEALTH ──
+async function checkHealth() {
+  try {
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    if (d.status === 'ok') {
+      dot.classList.add('online');
+      txt.textContent = 'Backend online · :8080';
+      toast('✅ Backend is healthy', 'success');
+    } else {
+      dot.classList.remove('online');
+      txt.textContent = 'Backend error';
+      toast('❌ Backend returned error', 'error');
+    }
+  } catch (e) {
+    document.getElementById('statusDot').classList.remove('online');
+    document.getElementById('statusText').textContent = 'Backend offline';
+    toast('❌ Cannot reach backend at :8080', 'error');
+  }
+}
+
+// ── LOADING STATE ──
+function setLoading(btnId, loading, label = '') {
+  const b = document.getElementById(btnId);
+  if (!b) return;
+  b.disabled = loading;
+  if (loading) {
+    b._orig = b.innerHTML;
+    b.innerHTML = '<span class="spinner"></span> Working…';
+  } else {
+    b.innerHTML = b._orig || label;
+  }
+}
+
+// ── INDEX REPO ──
+async function indexRepo() {
+  const path = document.getElementById('indexPath').value.trim();
+  if (!path) { toast('⚠️ Please enter a repository path', 'error'); return; }
+
+  setLoading('indexBtn', true);
+  const el = document.getElementById('indexResult');
+  el.innerHTML = '';
+
+  try {
+    const r = await fetch(API + '/repos/index', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_path: path })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+
+    const indexed = (d.indexed_files || []);
+    const skipped = (d.skipped_files || []);
+    const langs = (d.detected_languages || []);
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="color:var(--accent3)">✅ Indexing Complete</div>
+        <div class="report-grid">
+          <div class="report-item">
+            <div class="report-item-key">Repo Name</div>
+            <div class="report-item-val">${escHtml(d.repo_name || path)}</div>
+          </div>
+          <div class="report-item">
+            <div class="report-item-key">Total Chunks</div>
+            <div class="report-item-val" style="color:var(--accent)">${d.total_chunks ?? '—'}</div>
+          </div>
+          <div class="report-item">
+            <div class="report-item-key">Files Indexed</div>
+            <div class="report-item-val" style="color:var(--accent3)">${indexed.length}</div>
+          </div>
+          <div class="report-item">
+            <div class="report-item-key">Files Skipped</div>
+            <div class="report-item-val" style="color:var(--accent4)">${skipped.length}</div>
+          </div>
+        </div>
+        ${langs.length ? `<div style="margin-top:14px;"><div class="card-title">Languages Detected</div><div class="tag-list">${langs.map(l=>`<span class="tag">${escHtml(l)}</span>`).join('')}</div></div>` : ''}
+        ${indexed.length ? `<div style="margin-top:14px;"><div class="card-title">Indexed Files (${indexed.length})</div><div class="file-list">${indexed.slice(0,30).map(f=>`<div><span class="file">✓</span> ${escHtml(f)}</div>`).join('')}${indexed.length>30?`<div style="color:var(--text-dim)">… and ${indexed.length-30} more</div>`:''}</div></div>` : ''}
+        ${skipped.length ? `<div style="margin-top:14px;"><div class="card-title">Skipped Files</div><div class="file-list">${skipped.slice(0,10).map(f=>`<div><span class="skip">✗</span> ${escHtml(f)}</div>`).join('')}</div></div>` : ''}
+      </div>
+    `;
+    toast('✅ Repository indexed successfully!', 'success');
+  } catch (e) {
+    el.innerHTML = errCard(e.message);
+    toast('❌ Indexing failed', 'error');
+  } finally {
+    setLoading('indexBtn', false);
+  }
+}
+
+// ── QUERY ──
+async function queryRepo() {
+  const repo = document.getElementById('queryRepo').value.trim();
+  const question = document.getElementById('queryText').value.trim();
+  const topK = parseInt(document.getElementById('queryTopK').value) || 5;
+  if (!repo || !question) { toast('⚠️ Fill in repo name and question', 'error'); return; }
+
+  setLoading('queryBtn', true);
+  const el = document.getElementById('queryResult');
+  el.innerHTML = '';
+
+  try {
+    const r = await fetch(API + '/repos/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_name: repo, question, top_k: topK })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+
+    const chunks = d.source_chunks || [];
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="color:var(--accent)">💬 Answer</div>
+        <div class="answer-box">${escHtml(d.answer || '(no answer returned)')}</div>
+        ${chunks.length ? `
+          <hr class="divider">
+          <div class="card-title">📎 Source Chunks (${chunks.length})</div>
+          <div class="chunk-list">
+            ${chunks.map((c, i) => `
+              <div class="chunk-card">
+                <div class="chunk-header">
+                  <span class="badge badge-blue">#${i+1}</span>
+                  <span class="chunk-path">${escHtml(c.file_path || c.file_name || '?')}</span>
+                  ${c.start_line != null ? `<span class="chunk-lines">L${c.start_line}–${c.end_line ?? c.start_line}</span>` : ''}
+                  ${c.language ? `<span class="badge badge-purple">${escHtml(c.language)}</span>` : ''}
+                </div>
+                ${c.content ? `<div class="chunk-content">${escHtml(c.content)}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    toast('✅ Query answered!', 'success');
+  } catch (e) {
+    el.innerHTML = errCard(e.message);
+    toast('❌ Query failed', 'error');
+  } finally {
+    setLoading('queryBtn', false);
+  }
+}
+
+// ── SUMMARY ──
+async function getRepoSummary() {
+  const repo = document.getElementById('summaryRepo').value.trim();
+  if (!repo) { toast('⚠️ Enter repo name', 'error'); return; }
+
+  setLoading('summaryBtn', true);
+  const el = document.getElementById('summaryResult');
+  el.innerHTML = '';
+
+  try {
+    const r = await fetch(API + '/repos/' + encodeURIComponent(repo) + '/summary');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+
+    const listTag = (arr) => arr && arr.length
+      ? `<div class="tag-list">${arr.map(x=>`<span class="tag">${escHtml(x)}</span>`).join('')}</div>`
+      : '<span style="color:var(--text-dim)">—</span>';
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="color:var(--accent3)">📋 Repository Summary — ${escHtml(repo)}</div>
+        <div class="summary-grid">
+          <div class="summary-item full">
+            <div class="summary-item-label">What it does</div>
+            <div class="summary-item-value">${escHtml(d.what_it_does || '—')}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Tech Stack</div>
+            <div class="summary-item-value">${listTag(d.tech_stack)}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Major Modules</div>
+            <div class="summary-item-value">${listTag(d.major_modules)}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Entry Files</div>
+            <div class="summary-item-value">${listTag(d.entry_files)}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-label">Important Files</div>
+            <div class="summary-item-value">${listTag(d.important_files)}</div>
+          </div>
+          <div class="summary-item full">
+            <div class="summary-item-label">Architecture Notes</div>
+            <div class="summary-item-value">${escHtml(d.architecture_notes || '—')}</div>
+          </div>
+          ${d.needs_review && d.needs_review.length ? `
+          <div class="summary-item full">
+            <div class="summary-item-label">⚠️ Needs Review</div>
+            <div class="summary-item-value">${listTag(d.needs_review)}</div>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    toast('✅ Summary generated!', 'success');
+  } catch (e) {
+    el.innerHTML = errCard(e.message);
+    toast('❌ Summary failed', 'error');
+  } finally {
+    setLoading('summaryBtn', false);
+  }
+}
+
+// ── ARCHITECTURE ──
+async function getArchitecture() {
+  const repo = document.getElementById('archRepo').value.trim();
+  if (!repo) { toast('⚠️ Enter repo name', 'error'); return; }
+
+  setLoading('archBtn', true);
+  const el = document.getElementById('archResult');
+  el.innerHTML = '';
+
+  try {
+    const r = await fetch(API + '/repos/' + encodeURIComponent(repo) + '/architecture');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+
+    const listTag = (arr) => arr && arr.length
+      ? `<div class="tag-list">${arr.map(x=>`<span class="tag">${escHtml(x)}</span>`).join('')}</div>`
+      : '<span style="color:var(--text-dim)">—</span>';
+
+    const fileSection = (title, arr, style) => arr && arr.length ? `
+      <div class="arch-section">
+        <div class="arch-section-title">${title}</div>
+        <div class="file-list">${arr.map(f=>`<div style="color:${style}">• ${escHtml(f)}</div>`).join('')}</div>
+      </div>
+    ` : '';
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="color:var(--accent2)">🏗️ Architecture — ${escHtml(repo)}</div>
+        <div class="arch-section">
+          <div class="arch-section-title">Overview</div>
+          <div class="arch-content">${escHtml(d.overview || d.llm_analysis || '—')}</div>
+        </div>
+        ${d.tech_stack && d.tech_stack.length ? `
+        <div class="arch-section">
+          <div class="arch-section-title">Tech Stack</div>
+          ${listTag(d.tech_stack)}
+        </div>` : ''}
+        ${d.top_modules && d.top_modules.length ? `
+        <div class="arch-section">
+          <div class="arch-section-title">Top Modules</div>
+          ${listTag(d.top_modules)}
+        </div>` : ''}
+        ${fileSection('Entry Points', d.entry_points, 'var(--accent3)')}
+        ${fileSection('Config Files', d.config_files, 'var(--accent5)')}
+        ${fileSection('API Files', d.api_files, 'var(--accent)')}
+        ${fileSection('DB / Storage Files', d.db_files, 'var(--accent2)')}
+        ${fileSection('Auth Files', d.auth_files, 'var(--accent4)')}
+        ${fileSection('ML / AI Files', d.ml_files, 'var(--accent3)')}
+      </div>
+    `;
+    toast('✅ Architecture analyzed!', 'success');
+  } catch (e) {
+    el.innerHTML = errCard(e.message);
+    toast('❌ Analysis failed', 'error');
+  } finally {
+    setLoading('archBtn', false);
+  }
+}
+
+// ── HOTSPOTS ──
+async function getHotspots() {
+  const repo = document.getElementById('hotspotRepo').value.trim();
+  if (!repo) { toast('⚠️ Enter repo name', 'error'); return; }
+
+  setLoading('hotspotBtn', true);
+  const el = document.getElementById('hotspotResult');
+  el.innerHTML = '';
+
+  try {
+    const r = await fetch(API + '/repos/' + encodeURIComponent(repo) + '/hotspots');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || JSON.stringify(d));
+
+    const hotspots = d.hotspots || d || [];
+
+    if (!hotspots.length) {
+      el.innerHTML = `<div class="card" style="text-align:center; color:var(--text-muted)">🟢 No significant hotspots detected.</div>`;
+      toast('✅ No hotspots found!', 'success');
+      return;
+    }
+
+    const priorityBadge = (p) => ({
+      high: `<span class="badge badge-red">🔴 HIGH</span>`,
+      medium: `<span class="badge badge-orange">🟡 MEDIUM</span>`,
+      low: `<span class="badge badge-green">🟢 LOW</span>`
+    }[p] || `<span class="badge badge-blue">${escHtml(p)}</span>`);
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title" style="color:var(--accent4)">🔥 Hotspots — ${hotspots.length} flagged</div>
+        <div class="hotspot-list">
+          ${hotspots.map(h => `
+            <div class="hotspot-card ${h.priority || ''}">
+              <div style="flex:1">
+                <div class="hotspot-path">${escHtml(h.file_path || h.path || '?')}</div>
+                <div class="hotspot-reason">${escHtml(h.reason || '—')}</div>
+              </div>
+              <div>${priorityBadge(h.priority)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    toast(`🔥 Found ${hotspots.length} hotspot(s)`, 'success');
+  } catch (e) {
+    el.innerHTML = errCard(e.message);
+    toast('❌ Hotspot analysis failed', 'error');
+  } finally {
+    setLoading('hotspotBtn', false);
+  }
+}
+
+// ── UTILS ──
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function errCard(msg) {
+  return `<div class="card" style="border-color:rgba(252,129,129,0.3);">
+    <div class="card-title" style="color:var(--accent4)">❌ Error</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--text-muted); white-space:pre-wrap;">${escHtml(msg)}</div>
+  </div>`;
+}
+
+// ── INIT ──
+checkHealth();
+</script>
+</body>
+</html>

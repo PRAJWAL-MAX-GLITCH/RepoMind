@@ -1,0 +1,72 @@
+.venv
+.env
+.uv-cache
+.dist
+
+/models/
+/tiktoken_cache/
+/local_data/
+
+settings-me.yaml
+
+.ruff_cache
+.pytest_cache
+.mypy_cache
+.dmypy.json
+control/**
+
+# byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# unit tests / coverage reports
+/tests-results.xml
+/.coverage
+/coverage.xml
+/htmlcov/
+
+# pyenv
+/.python-version
+
+# IDE
+.idea/
+.vscode/
+/.run/
+.fleet/
+
+# macOS
+.DS_Store
+
+# Celery
+celery_backend.db
+celery_flower.db
+celery.exchange
+celery.pidbox.exchange
+
+# Coverage
+.coverage.*
+
+# Websearch cache
+.cache/
+
+# Node / Frontend
+node_modules/
+repomind-ui/node_modules/
+repomind-ui/dist/
+repomind-ui/.vite/
+frontend/node_modules/
+dist/
+.next/
+.nuxt/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+*.local
+.env.local
+.env.production
+
+# Build artifacts
+*.egg-info/
+build/

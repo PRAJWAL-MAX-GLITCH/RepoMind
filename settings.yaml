@@ -1,0 +1,318 @@
+# The default configuration file.
+# More information about configuration can be found in the documentation: https://docs.repomind.dev/
+# Syntax in `repomind/settings/settings.py`
+server:
+  env_name: ${APP_ENV:prod}
+  root_path: ${REPOMIND_ROOT_PATH:}
+  port: ${PORT:8080}
+  cors:
+    enabled: ${REPOMIND_CORS_ENABLED:true}
+    allow_origins: ["*"]
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+  auth:
+    enabled: false
+    # python -c 'import base64; print("Basic " + base64.b64encode("secret:key".encode()).decode())'
+    # 'secret' is the username and 'key' is the password for basic auth by default
+    # If the auth is enabled, this value must be set in the "Authorization" header of the request.
+    secret: "Basic c2VjcmV0OmtleQ=="
+  network:
+    offline_mode: ${REPOMIND_OFFLINE_MODE,HF_HUB_OFFLINE:false}
+    proxy:
+      enabled: ${PROXY_ENABLED:false}
+      http_proxy: ${HTTP_PROXY,http_proxy:}
+      https_server: ${HTTPS_PROXY,https_proxy:}
+      username: ${PROXY_USERNAME:}
+      password: ${PROXY_PASSWORD:}
+      bypass: ${NO_PROXY:localhost,127.0.0.1}
+    ssl:
+      cert_file: ${SSL_CERT_FILE:}
+      cert_dir: ${SSL_CERT_DIR:}
+      verify_ssl: ${SSL_VERIFY:true}
+  api_doc:
+    enabled: ${REPOMIND_SWAGGER_ENABLED:true}
+    swagger_url: ${REPOMIND_SWAGGER_URL:/docs}
+    redoc_url: ${REPOMIND_REDOC_URL:/redoc}
+    openapi_url: ${REPOMIND_OPENAPI_URL:/openapi.json}
+  ui:
+    enabled: ${REPOMIND_UI_ENABLED:true}
+    path: ${REPOMIND_UI_PATH:/ui}
+  debug_mode: ${DEBUG_MODE:false}
+  max_workers: ${REPOMIND_MAX_WORKERS:0}
+
+data:
+  local_ingestion:
+    enabled: ${LOCAL_INGESTION_ENABLED:false}
+    allow_ingest_from: ["*"]
+  local_data_folder: ${REPOMIND_LOCAL_DATA_FOLDER:local_data/repomind}
+  reader: ${REPOMIND_DATA_READER:auto}
+  enable_fake_progress: ${REPOMIND_ENABLE_FAKE_PROGRESS:false}
+  enable_reuse_generated_nodes_before: ${REPOMIND_ENABLE_REUSE_GENERATED_NODES_BEFORE:false}
+  enable_vision_fallback: ${REPOMIND_ENABLE_VISION_FALLBACK:false}
+  enable_term_extractor: ${REPOMIND_ENABLE_TERM_EXTRACTOR:false}
+  max_num_nodes: ${REPOMIND_MAX_NUM_NODES:0}
+  use_async: ${REPOMIND_USE_ASYNC:false}
+
+observability:
+  mode: ${REPOMIND_OBSERVABILITY:none}
+
+retrieval:
+  top_k: ${REPOMIND_RETRIEVAL_TOP_K:32}
+  maximize_top_k: ${REPOMIND_MAXIMIZE_TOP_K:true}
+  max_merging_recalculations: ${REPOMIND_MAX_MERGING_RECALCULATIONS:3}
+
+chat:
+  allow_use_default_prompt: ${REPOMIND_ALLOW_USE_DEFAULT_PROMPT:true}
+  allow_use_context: ${REPOMIND_ALLOW_USE_CONTEXT:true}
+  allow_generate_citations: ${REPOMIND_ALLOW_GENERATE_CITATIONS:true}
+  allow_use_reasoning: ${REPOMIND_ALLOW_USE_REASONING:true}
+  return_missing_citations: ${REPOMIND_RETURN_MISSING_CITATIONS:false}
+  deduplicate_context_in_history: ${REPOMIND_DEDUPLICATE_CONTEXT_IN_HISTORY:true}
+  add_context_to_system_prompt: ${REPOMIND_ADD_CONTEXT_TO_SYSTEM_PROMPT:false}
+  force_to_return_citations: ${REPOMIND_FORCE_TO_RETURN_CITATIONS:false}
+  numerical_shorter_citations: ${REPOMIND_NUMERICAL_SHORTER_CITATIONS:false}
+  condense_strategy: ${REPOMIND_CONDENSE_CHAT_HISTORY:condenser}
+  format_context_strategy: ${REPOMIND_FORMAT_CONTEXT:list}
+  maximum_context_length: ${REPOMIND_MAXIMUM_CONTEXT_LENGTH:0}
+  assistant_name: ${REPOMIND_ASSISTANT_NAME:RepoMind}
+  assistant_description: ${REPOMIND_ASSISTANT_DESCRIPTION:}
+  maximum_history_length: ${REPOMIND_MAXIMUM_HISTORY_LENGTH:0}
+  tldr_timeout: ${REPOMIND_TLDR_TIMEOUT:300}
+  tldr_minimum_threshold_seconds: ${REPOMIND_TLDR_MINIMUM_THRESHOLD_SECONDS:1.5}
+  multiplexing_threshold: ${REPOMIND_MULTIPLEXING_THRESHOLD:10}
+  maximum_concurrent_requests: ${REPOMIND_MAXIMUM_CONCURRENT_REQUESTS:10}
+  maximum_blob_size: ${REPOMIND_MAXIMUM_BLOB_SIZE:26214400}
+
+stream:
+  broker: ${REPOMIND_ASYNC_BROKER:memory}
+  stream_expiration: ${REPOMIND_ASYNC_STREAM_EXPIRATION:3600}
+  maximum_stream_length: ${REPOMIND_ASYNC_MAXIMUM_STREAM_LENGTH:10000}
+  stream_prefix: ${REPOMIND_ASYNC_STREAM_PREFIX:stream}
+  status_prefix: ${REPOMIND_ASYNC_STATUS_PREFIX:status}
+  minimum_connections: ${REPOMIND_ASYNC_MINIMUM_CONNECTIONS:50}
+
+llm:
+  default_model: ${REPOMIND_LLM_DEFAULT:}
+  auto_discover_models: ${REPOMIND_LLM_AUTO_DISCOVER_MODELS:true}
+
+# We need to have at least one model defined here, even if it's just a placeholder for the default model defined above.
+models: []
+
+embedding:
+  default_model: ${REPOMIND_EMBEDDING_DEFAULT:}
+  auto_discover_models: ${REPOMIND_EMBEDDING_AUTO_DISCOVER_MODELS:true}
+  ingest_mode: simple
+
+huggingface:
+  username: ${REPOMIND_HUGGINGFACE_USERNAME:zylon-ai}
+  access_token: ${REPOMIND_HUGGINGFACE_TOKEN:}
+  # Warning: Enabling this option will allow the model to download and execute code from the internet.
+  # Nomic AI requires this option to be enabled to use the model, be aware if you are using a different model.
+  trust_remote_code: true
+
+vectorstore:
+  database: ${REPOMIND_VECTORSTORE:qdrant}
+  # Needs to match the selected embeddings model
+  embed_dim: ${REPOMIND_EMBED_DIM:1024}
+  # Determine multi-tenancy type
+  multitenancy: ${REPOMIND_MULTITENANCY:logical}
+  # Default collection name when logical multitenancy is enabled
+  default_collection: ${REPOMIND_DEFAULT_COLLECTION:zgptvector}
+
+node_store:
+  index_store: ${REPOMIND_INDEX_STORE:simple}
+  doc_store: ${REPOMIND_DOC_STORE:simple}
+
+openai:
+  api_base: ${OPENAI_API_BASE:https://api.openai.com/v1}
+  api_key: ${OPENAI_API_KEY:}
+  embedding_api_base: ${OPENAI_EMBEDDING_API_BASE:}
+  embedding_api_key: ${OPENAI_EMBEDDING_API_KEY:}
+  request_timeout: ${OPENAI_REQUEST_TIMEOUT:600.0}
+
+triton:
+  api_base: ${REPOMIND_TRITON_API_BASE:http://localhost:8000}
+  ssl: ${REPOMIND_TRITON_SSL:false}
+  grpc_keep_alive_time: ${REPOMIND_TRITON_GRPC_KEEP_ALIVE_TIME:30000}
+  grpc_keep_alive_timeout: ${REPOMIND_TRITON_GRPC_KEEP_ALIVE_TIMEOUT:20000}
+  grpc_permit_keep_alive_without_calls: ${REPOMIND_TRITON_GRPC_PERMIT_KEEP_ALIVE_WITHOUT_CALLS:true}
+  grpc_max_pings_without_data: ${REPOMIND_TRITON_GRPC_MAX_PINGS_WITHOUT_DATA:0}
+
+docling:
+  mode: ${REPOMIND_DOCLING_MODE:api}
+  api_base: ${REPOMIND_DOCLING_API_BASE:http://localhost:5001}
+  api_version: ${REPOMIND_DOCLING_API_VERSION:v1alpha}
+  api_key: ${REPOMIND_DOCLING_API_KEY:}
+  tenant_id: ${REPOMIND_DOCLING_TENANT_ID:}
+  num_threads: ${REPOMIND_DOCLING_NUM_WORKERS:4}
+  use_ocr: ${REPOMIND_DOCLING_USE_OCR:true}
+  ocr_model: ${REPOMIND_DOCLING_OCR_MODEL:easyocr}
+  use_gpu: ${REPOMIND_DOCLING_USE_GPU:false}
+  force_full_page_ocr: ${REPOMIND_DOCLING_FORCE_FULL_PAGE_OCR:false}
+  bitmap_area_threshold: ${REPOMIND_DOCLING_BITMAP_AREA_THRESHOLD:0.2}
+  do_cell_matching: ${REPOMIND_DOCLING_DO_CELL_MATCHING:true}
+  image_mode: ${REPOMIND_DOCLING_IMAGE_MODE:placeholder}
+  table_mode: ${REPOMIND_DOCLING_TABLE_MODE:accurate}
+  image_classifier: ${REPOMIND_DOCLING_IMAGE_CLASSIFIER:none}
+  image_descriptor: ${REPOMIND_DOCLING_IMAGE_DESCRIPTOR:none}
+  langs: ${REPOMIND_DOCLING_LANGS:["en-US", "fr-FR", "de-DE", "es-ES"]}
+  use_async: ${REPOMIND_DOCLING_USE_ASYNC:true}
+
+celery:
+  use_workers: true
+  acks_late: ${REPOMIND_CELERY_ACKS_LATE:true}
+  soft_time_limit: ${REPOMIND_CELERY_SOFT_TIME_LIMIT:}
+  hard_time_limit: ${REPOMIND_CELERY_HARD_TIME_LIMIT:}
+  visibility_timeout: ${REPOMIND_CELERY_VISIBILITY_TIMEOUT:21600}
+
+# Broker to which workers will notify the result of tasks
+tasks_results_broker:
+  mode: ${REPOMIND_TASKS_RESULTS_BROKER_MODE:rabbitmq}
+
+rabbitmq:
+  ssl: ${REPOMIND_RABBITMQ_SSL:false}
+  host: ${REPOMIND_RABBITMQ_HOST:localhost:5672}
+  username: ${REPOMIND_RABBITMQ_USERNAME:guest}
+  password: ${REPOMIND_RABBITMQ_PASSWORD:guest}
+
+database:
+  host: ${REPOMIND_DATABASE_HOST:localhost:5432}
+  database: ${REPOMIND_DATABASE_NAME:backend-main}
+  username: ${REPOMIND_DATABASE_USERNAME:postgres}
+  password: ${REPOMIND_DATABASE_PASSWORD:postgres}
+
+redis:
+  host: ${REPOMIND_REDIS_HOST:localhost:6379}
+  username: ${REPOMIND_REDIS_USERNAME:}
+  password: ${REPOMIND_REDIS_PASSWORD:}
+  database: ${REPOMIND_REDIS_DATABASE:0}
+
+unstructured:
+  url: ${REPOMIND_UNSTRUCTURED_URL:}
+
+qdrant:
+  url: ${REPOMIND_QDRANT_URL:}
+  path: ${REPOMIND_QDRANT_PATH:local_data/qdrant}
+  hybrid_search: ${REPOMIND_QDRANT_HYBRID_SEARCH:false}
+  distance_metric: ${REPOMIND_QDRANT_DISTANCE_METRIC:cosine}
+  hnsw_m: ${REPOMIND_QDRANT_HSNW_M:0}
+  hnsw_payload_m: ${REPOMIND_QDRANT_HSNW_PAYLOAD_M:16}
+  prefer_grpc: ${REPOMIND_QDRANT_PREFER_GRPC:true}
+  timeout: ${REPOMIND_QDRANT_TIMEOUT:120000}
+
+s3:
+  endpoint_url: ${REPOMIND_S3_ENDPOINT_URL:}
+  public_endpoint_url: ${REPOMIND_S3_PUBLIC_ENDPOINT_URL:}
+  path_prefix: ${REPOMIND_S3_PATH_PREFIX:}
+  access_key_id: ${REPOMIND_S3_ACCESS_KEY_ID:}
+  secret_access_key: ${REPOMIND_S3_SECRET_ACCESS_KEY:}
+  durable_bucket_name: ${REPOMIND_S3_DURABLE_BUCKET_NAME:zylon-storage}
+  temporary_bucket_name: ${REPOMIND_S3_TEMPORARY_BUCKET_NAME:zylon-temporary}
+
+phoenix:
+  url: ${REPOMIND_PHOENIX_URL:http://localhost:6006}
+
+opik:
+  host: ${REPOMIND_OPIK_HOST:http://localhost:5173/}
+  project_name: ${REPOMIND_OPIK_PROJECT_NAME:}
+  api_key: ${REPOMIND_OPIK_API_KEY:}
+  workspace: ${REPOMIND_OPIK_WORKSPACE:default}
+  task_threads: ${REPOMIND_OPIK_TASK_THREADS:16}
+
+sandbox:
+  provider: ${REPOMIND_SANDBOX_PROVIDER:local}
+  base_url: ${REPOMIND_SANDBOX_URL:}
+  timeout: ${REPOMIND_SANDBOX_TIMEOUT:60}
+
+
+code_execution:
+  provider: ${REPOMIND_CODE_EXECUTION_PROVIDER:local}
+  workspace_path: ${REPOMIND_CODE_EXECUTION_WORKSPACE_PATH:}
+  timeout: ${REPOMIND_CODE_EXECUTION_TIMEOUT:60}
+  max_output_bytes: ${REPOMIND_CODE_EXECUTION_MAX_OUTPUT_BYTES:1048576}
+
+web_fetch:
+  enabled: ${REPOMIND_WEBFETCH_ENABLED:false}
+  timeout_seconds: ${REPOMIND_WEBFETCH_TIMEOUT_SECONDS:15}
+  pool_size: ${REPOMIND_WEBFETCH_POOL_SIZE:8}
+  pool_idle_timeout_seconds: ${REPOMIND_WEBFETCH_POOL_IDLE_TIMEOUT:300}
+  pool_max_pages_per_browser: ${REPOMIND_WEBFETCH_POOL_MAX_PAGES:4}
+
+database_query:
+  timeout_seconds: ${REPOMIND_DATABASE_QUERY_TIMEOUT_SECONDS:1000}
+  batch_size: ${REPOMIND_DATABASE_QUERY_BATCH_SIZE:1000}
+  max_mb_result: ${REPOMIND_DATABASE_QUERY_MAX_MB_RESULT:150}
+
+web_search:
+  enabled: ${REPOMIND_WEBSEARCH_ENABLED:false}
+  provider: ${REPOMIND_WEBSEARCH_PROVIDER:mock}
+  processor: ${REPOMIND_WEBSEARCH_PROCESSOR:best_links}
+  num_links: ${REPOMIND_WEBSEARCH_NUM_LINKS:20}
+  mode_quality: ${REPOMIND_WEBSEARCH_MODE_QUALITY:fast}
+  cached: ${REPOMIND_WEBSEARCH_CACHED:false}
+  context_token: ${REPOMIND_WEBSEARCH_CONTEXT_TOKEN:2000}
+
+  fast_params:
+    max_timeout_seconds: ${REPOMIND_WEBSEARCH_FAST_MAX_TIMEOUT_SECONDS:100}
+    max_summary_timeout_seconds: ${REPOMIND_WEBSEARCH_FAST_MAX_SUMMARY_TIMEOUT_SECONDS:40}
+    num_references: ${REPOMIND_WEBSEARCH_FAST_NUM_REFERENCES:3}
+    num_concurrent_consumers: ${REPOMIND_WEBSEARCH_FAST_NUM_CONCURRENT_CONSUMERS:6}
+    max_parallel_summary: ${REPOMIND_WEBSEARCH_FAST_MAX_PARALLEL_SUMMARY:2}
+    index_weight: ${REPOMIND_WEBSEARCH_FAST_INDEX_WEIGHT:0}
+    token_weight: ${REPOMIND_WEBSEARCH_FAST_TOKEN_WEIGHT:1}
+    token_exponent_penalty: ${REPOMIND_WEBSEARCH_FAST_TOKEN_EXPONENT_PENALTY:4}
+  accurate_params:
+    max_timeout_seconds: ${REPOMIND_WEBSEARCH_ACCURATE_MAX_TIMEOUT_SECONDS:500}
+    max_summary_timeout_seconds: ${REPOMIND_WEBSEARCH_ACCURATE_MAX_SUMMARY_TIMEOUT_SECONDS:100}
+    num_references: ${REPOMIND_WEBSEARCH_ACCURATE_NUM_REFERENCES:5}
+    num_concurrent_consumers: ${REPOMIND_WEBSEARCH_ACCURATE_NUM_CONCURRENT_CONSUMERS:4}
+    max_parallel_summary: ${REPOMIND_WEBSEARCH_ACCURATE_MAX_PARALLEL_SUMMARY:2}
+    index_weight: ${REPOMIND_WEBSEARCH_ACCURATE_INDEX_WEIGHT:1}
+    token_weight: ${REPOMIND_WEBSEARCH_ACCURATE_TOKEN_WEIGHT:1}
+    token_exponent_penalty: ${REPOMIND_WEBSEARCH_ACCURATE_TOKEN_EXPONENT_PENALTY:4}
+
+brave:
+  api_key: ${REPOMIND_BRAVE_API_KEY:}
+  rate_limit: ${REPOMIND_BRAVE_RATE_LIMIT:1}
+
+skills:
+  database: ${REPOMIND_SKILLS_DATABASE:sqlite}
+  storage_provider: ${REPOMIND_SKILLS_STORAGE_PROVIDER:local}
+  skill_injection_mode: ${REPOMIND_SKILL_INJECTION_MODE:system_prompt}
+  maximum_loaded_skills: ${REPOMIND_SKILL_MAXIMUM_LOADED_SKILLS:1}
+
+semaphore:
+  mode: ${REPOMIND_SEMAPHORE_MODE:memory}
+
+transformation:
+  pptx:
+    vision:
+      retry_number: ${REPOMIND_TRANSFORMATION_PPTX_VISION_RETRY_NUMBER:3}
+      enable_evaluation: ${REPOMIND_TRANSFORMATION_PPTX_VISION_ENABLE_EVALUATION:true}
+      max_concurrent: ${REPOMIND_TRANSFORMATION_PPTX_VISION_MAX_CONCURRENT:4}
+      batch_size: ${REPOMIND_TRANSFORMATION_PPTX_VISION_BATCH_SIZE:8}
+      max_iterations: ${REPOMIND_TRANSFORMATION_PPTX_VISION_MAX_ITERATIONS:2}
+      enable_semaphore: ${REPOMIND_TRANSFORMATION_PPTX_ENABLE_SEMAPHORE:false}
+      mode: ${REPOMIND_TRANSFORMATION_PPTX_VISION_MODE:none}
+
+  docling:
+    vision:
+      retry_number: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_RETRY_NUMBER:3}
+      enable_evaluation: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_ENABLE_EVALUATION:true}
+      max_concurrent: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_MAX_CONCURRENT:4}
+      batch_size: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_BATCH_SIZE:8}
+      max_iterations: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_MAX_ITERATIONS:2}
+      enable_semaphore: ${REPOMIND_TRANSFORMATION_DOCLING_ENABLE_SEMAPHORE:false}
+      mode: ${REPOMIND_TRANSFORMATION_DOCLING_VISION_MODE:none}
+
+  vision_documents:
+      vision:
+        retry_number: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_RETRY_NUMBER:3}
+        enable_evaluation: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_ENABLE_EVALUATION:false}
+        max_concurrent: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_MAX_CONCURRENT:4}
+        batch_size: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_BATCH_SIZE:8}
+        max_iterations: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_MAX_ITERATIONS:2}
+        enable_semaphore: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_ENABLE_SEMAPHORE:false}
+        mode: ${REPOMIND_TRANSFORMATION_VISION_DOCUMENTS_VISION_MODE:none}
+
+
